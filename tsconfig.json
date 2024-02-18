@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "module": "es6",
+    "declaration": true,
+    "jsx": "react",
+    "jsxFactory": "jsx",
+    "outDir": "./lib",
+    "target": "es5",
+    "allowJs": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  
+}
