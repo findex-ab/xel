@@ -4,17 +4,17 @@
     "target": "es5",
     "declaration": true,
     "outDir": "./lib",
-    "baseUrl": "./src/xel",
+    "baseUrl": "./_tmp_/xel",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "Bundler",
     "sourceMap": true,
   },
   "include": [
-    "src/**/*"
+    "_tmp_/**/*"
   ],
   "exclude": [
-    "src/index.tsx",
-    "src/external.d.ts"
+    "_tmp_/index.tsx",
+    "_tmp_/external.d.ts"
   ]
 }

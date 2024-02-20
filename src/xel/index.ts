@@ -151,6 +151,18 @@ export type XCallee<
   state: StateType;
 };
 
+const assignElement = (x: XElement, el: XNativeRenderableFactor) => {
+  if (!isHTMLElement(el)) return el;
+  if (x.el) {
+    x.el.replaceWith(el);
+  }
+
+
+  x.el = el;
+
+  return x.el;
+}
+
 const addChild = (xel: XElement, child: XElement) => {
   child.getParent = () => xel;
   
@@ -158,6 +170,7 @@ const addChild = (xel: XElement, child: XElement) => {
     (child) => isXElement(child) && child.uid === child.uid
   );
   if (existing) {
+    assignElement(existing as XElement, child.el);
     const idx = xel.children.indexOf(existing);
     xel.children = xel.children.map((ch, i) => (i === idx ? child : ch));
   } else {
@@ -244,14 +257,29 @@ const setAttribute = (
       ...normalKeys.map((k) => ({ [k]: value[k] }))
     );
 
-    x.config.children = [
-      ...(x.config.children || []),
-      X("style", {
-        type: "text/css",
-        innerText:
-          `.c-${x.uid} {${cssPropsToString(normalObject)} }\n` + pseudoObjects,
-      }),
-    ];
+
+    const styleID = `style-${x.uid}`;
+    let styleEl = document.getElementById(styleID);
+
+    const exists = !!styleEl;
+
+    styleEl = styleEl || document.createElement('style')
+   
+    
+    styleEl.innerText = `.c-${x.uid} {${cssPropsToString(normalObject)} }\n` + pseudoObjects;
+
+    if (!exists) {
+      document.head.append(styleEl);
+    }
+
+    //x.config.children = [
+    //  ...(x.config.children || []),
+    //  X("style", {
+    //    type: "text/css",
+    //    innerText:
+    //      `.c-${x.uid} {${cssPropsToString(normalObject)} }\n` + pseudoObjects,
+    //  }),
+    //];
     return;
   }
 
@@ -322,7 +350,8 @@ export const xRender_x = (
     }
     mount(child, { callee: { ...callee, args: args }, target: el });
   }
-  return el;
+
+  return assignElement(x, el);
 };
 
 const isVNode = (value: any): boolean => {
@@ -407,7 +436,11 @@ export const X = <
     const chars = Array.from("abcdefghijklmnopqrstuvwxyz0123456789");
     let h = 0;
 
-    for (const c of Array.from(tag + (err.stack ? err.stack : ''))) {
+
+    const auid = (cfg.render ? 'Y' : 'N') + (cfg.children ? cfg.children.length.toString() : '0');
+
+    const cname = cfg.cname || '';
+    for (const c of Array.from(auid + cname + tag + (err.stack ? err.stack : ''))) {
       let d = toUint32(c.codePointAt(0));
       d ^= d << toUint32(17);
       d ^= d >> toUint32(13);
@@ -436,50 +469,13 @@ export const X = <
     ) => {
       return X(tag, typeof props === "object" ? { ...cfg, ...props } : cfg);
     },
-    uid: cfg.cname || genUid(),
+    uid: genUid(),
     getParent: () => undefined
   });
 
   return xel;
 };
 
-export const xUpdate = (x: XElement, callee?: XCallee) => {
-  const next = xRender(x, callee);
-
-  if (isHTMLElement(x.el) && isHTMLElement(next)) {
-    const a = x.el.outerHTML;
-    const b = next.outerHTML;
-    if (a === b) return x.el;
-  }
-
-  let didUpdate: boolean = false;
-
-  if (callee && !isUndefined(callee.nextValue) && !isUndefined(callee.oldValue) && isHTMLElement(next) && isHTMLElement(x.el) && next.children.length === x.el.children.length) {
-    const len = Math.max(next.children.length, x.el.children.length);
-
-    for (let i = 0; i < len; i++) {
-      const a = x.el.children[i % x.el.children.length];
-      const b = next.children[i % next.children.length];
-
-      if (a.innerHTML !== b.innerHTML) {
-        a.replaceWith(b);
-        didUpdate = true;
-      }
-      
-    }
-  }
-
-  if (!didUpdate) {
-    x.el.replaceWith(next);
-    x.el = next;
-  }
-
-  if (x.config.onUpdate && isXElementLoaded(x)) {
-    x.config.onUpdate(x);
-  }
-
-  return x.el;
-};
 
 export type XMountOptions = {
   target?: Element | null | undefined;
@@ -494,14 +490,17 @@ export const mount = <
   x: XRenderable<CustomPropsType, StateType>,
   options: XMountOptions
 ): XNativeRenderableFactor => {
-  const callee = options.callee || { state: {} };
+  const callee = {...(options.callee || { state: {} })};
+  if (isXElement(x)) {
+    callee.x = x;
+  }
+  
   const target = options.target;
 
-  if (isXElement(x) && x.el) {
-    return xUpdate(x, options.callee);
-  }
+  let el: XRenderableFactor | undefined = undefined;
+  el = xRender(x, callee) as HTMLElement;
+  
 
-  const el = xRender(x, callee);
 
   if (target) {
     if (options.replace) {
@@ -512,7 +511,7 @@ export const mount = <
   }
 
   if (isXElement(x)) {
-    x.el = el;
+    assignElement(x, el);
 
     //if (x.config.ref) {
      // const cloned = {...x, config: {}};
