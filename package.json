@@ -1,6 +1,6 @@
 {
   "name": "xel",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "My webpack project",
   "main": "./lib/xel/index.js",
   "types": "./lib/xel/index.d.ts",

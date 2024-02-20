@@ -119,6 +119,7 @@ export type XElement<
   magic: "x";
   children: XRenderable[];
   el?: XNativeRenderableFactor;
+  styleEl?: HTMLStyleElement;
   call: (
     props: XElementInit<CustomPropsType, StateType> | Partial<CustomPropsType>
   ) => XElement;
@@ -160,6 +161,9 @@ const assignElement = (x: XElement, el: XNativeRenderableFactor) => {
 
   x.el = el;
 
+
+  setAttributes(x, { state: x.state, x, el }, x.el);
+
   return x.el;
 }
 
@@ -184,6 +188,8 @@ const setAttribute = (
   key: string | Symbol,
   value: any
 ) => {
+  if (!el.setAttribute) return;
+  
   key = key.toString();
 
   if (
@@ -259,11 +265,12 @@ const setAttribute = (
 
 
     const styleID = `style-${x.uid}`;
-    let styleEl = document.getElementById(styleID);
+    let styleEl = x.styleEl || document.getElementById(styleID);
 
     const exists = !!styleEl;
 
     styleEl = styleEl || document.createElement('style')
+    styleEl.setAttribute('id', styleID);
    
     
     styleEl.innerText = `.c-${x.uid} {${cssPropsToString(normalObject)} }\n` + pseudoObjects;
@@ -286,6 +293,7 @@ const setAttribute = (
   try {
     el.setAttribute(key, value);
   } catch (e) {
+    console.error({ element: el });
     console.warn(e);
   }
 };
@@ -323,6 +331,22 @@ const pushClass = (attr: any, cls: string): string[] => {
   if (isArray(attr)) return [...attr, cls] as string[];
   return [cls];
 };
+
+
+const setAttributes = (x: XElement, callee: XCallee, el?: Element) => {
+  el = (el || x.el) as HTMLElement;
+  if (!el || !isHTMLElement(el)) return;
+  callee = { ...callee, args: { ...(callee.args || {}), ...(x.config || {}) } };
+  let attributes = { ...(callee.args || {}) };
+  attributes.className = pushClass(attributes.className, `c-${x.uid}`).join(
+    " "
+  );
+  for (const [key, value] of Object.entries(attributes)) {
+    setAttribute(x, el, key, value);
+  }
+}
+
+
 
 //class: `c-${x.uid}`
 export const xRender_x = (
@@ -437,10 +461,14 @@ export const X = <
     let h = 0;
 
 
-    const auid = (cfg.render ? 'Y' : 'N') + (cfg.children ? cfg.children.length.toString() : '0');
+    //const auid = (cfg.render ? 'Y' : 'N') + (cfg.children ? cfg.children.length.toString() : '0');
 
     const cname = cfg.cname || '';
-    for (const c of Array.from(auid + cname + tag + (err.stack ? err.stack : ''))) {
+    for (const c of Array.from(JSON.stringify({
+      a: cfg.cname,
+      b: cfg.name,
+      c: (cfg.children || []).length
+    }))) {
       let d = toUint32(c.codePointAt(0));
       d ^= d << toUint32(17);
       d ^= d >> toUint32(13);

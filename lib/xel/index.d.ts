@@ -37,6 +37,7 @@ export type XElement<CustomPropsType extends XUserProps = XUserProps, StateType 
     magic: "x";
     children: XRenderable[];
     el?: XNativeRenderableFactor;
+    styleEl?: HTMLStyleElement;
     call: (props: XElementInit<CustomPropsType, StateType> | Partial<CustomPropsType>) => XElement;
     uid: string;
     getParent: (() => XElement | undefined);
