@@ -1,13 +1,13 @@
 {
   "name": "xel",
-  "version": "1.0.4",
-  "description": "shared definitions",
+  "version": "1.0.5",
+  "description": "xel",
   "bin": {
     "xel": "./bin/xel"
   },
-  "main": "build/main/xel/index.js",
-  "typings": "build/main/xel/index.d.ts",
-  "module": "build/module/xel/index.js",
+  "main": "build/main/index.js",
+  "module": "build/module/index.js",
+  "typings": "build/main/index.d.ts",
   "repository": "https://github.com/findex-ab/xel",
   "license": "MIT",
   "scripts": {

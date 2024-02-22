@@ -4,10 +4,5 @@
     "target": "esnext",
     "outDir": "build/module",
     "module": "esnext"
-  },
-  "exclude": [
-    "node_modules/**",
-    "./src/index.tsx",
-    "./src/external.d.ts"
-  ]
+  }
 }
