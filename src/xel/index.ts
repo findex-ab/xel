@@ -118,6 +118,7 @@ export type XElement<
   config: XElementConfig<CustomPropsType, StateType>;
   magic: "x";
   children: XRenderable[];
+  didReportMount: boolean;
   el?: XNativeRenderableFactor;
   styleEl?: HTMLStyleElement;
   call: (
@@ -152,6 +153,18 @@ export type XCallee<
   state: StateType;
 };
 
+
+const reportMount = (x: XElement) => {
+  if (!isXElementLoaded(x)) return;
+  if (x.didReportMount) return;
+
+  if (x.config.onMount) {
+    x.config.onMount(x);
+  }
+
+  x.didReportMount = true;
+}
+
 const assignElement = (x: XElement, el: XNativeRenderableFactor) => {
   if (!isHTMLElement(el)) return el;
   if (x.el) {
@@ -163,6 +176,7 @@ const assignElement = (x: XElement, el: XNativeRenderableFactor) => {
 
 
   setAttributes(x, { state: x.state, x, el }, x.el);
+  reportMount(x);
 
   return x.el;
 }
@@ -391,9 +405,21 @@ const xRender_ = (
   if (isString(x)) return xRender_string(x, callee);
   if (isHTMLElement(x)) return xRender_element(x, callee);
   if (isXElement(x)) {
-    if (x.config.render && isXFunction(x.config.render))
-      return xRender(x.config.render, { state: x.state, args: x.config, x });
-    return xRender_x(x, callee);
+
+    const renderItem = () => {
+      if (x.config.render && isXFunction(x.config.render)) {
+        return xRender(x.config.render, { state: x.state, args: x.config, x });
+      }
+      return xRender_x(x, callee);
+    }
+
+    const r = renderItem();
+
+    if (!x.el) {
+      assignElement(x, r);
+    }
+
+    return r;
   }
   const y = x as unknown as any;
 
@@ -492,6 +518,7 @@ export const X = <
     magic: "x",
     state: state,
     children: [],
+    didReportMount: false,
     call: (
       props: XElementInit<CustomPropsType, StateType> & Partial<CustomPropsType>
     ) => {
@@ -546,9 +573,9 @@ export const mount = <
      // x.config.ref.value = cloned;
    // }
     
-    if (x.config.onMount && isXElementLoaded(x)) {
-      x.config.onMount(x);
-    }
+    //if (x.config.onMount && isXElementLoaded(x)) {
+    //  x.config.onMount(x);
+    //}
 
     if (x.config.onUpdate && isXElementLoaded(x)) {
       x.config.onUpdate(x);
