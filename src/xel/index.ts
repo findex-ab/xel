@@ -356,7 +356,11 @@ const setAttributes = (x: XElement, callee: XCallee, el?: Element) => {
     " "
   );
   for (const [key, value] of Object.entries(attributes)) {
-    setAttribute(x, el, key, value);
+    try {
+      setAttribute(x, el, key, value);
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
